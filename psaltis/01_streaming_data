@@ -1,0 +1,82 @@
+----------------------------------------------------------------------------
+|  CHAPTER 1 - STREAMING DATA                                              |
+----------------------------------------------------------------------------
+
+- Book Structure
+
+    Ch 1 = Streaming Data Architecture
+
+
+    Collection  ->  Message Queueing  ->  Analysis  ->  In-Memory Data  ->  Data Access
+    Tier            Tier                  Tier          Store               Tier
+
+    (Ch 2)          (Ch 3)                (Ch 4-5)      (Ch 6)              (Ch 7-8)
+
+
+    Ch 9 = Example Java Project
+
+
+
+- Real-Time Systems
+
+    - Types of Real-Time Systems
+
+        1. Hard
+             - Examples: pacemaker, anti-lock brakes
+             - Latency measured in microseconds-milliseconds
+             - No tolerance for delay, possible loss of life
+
+        2. Soft
+             - Examples: airline reservation system, online stock quotes, VOIP
+             - Latency measured in milliseconds-seconds
+             - Low tolerance for delay, but life not at risk
+
+        3. Near
+             - Examples: Skype video, home automation
+             - Latency measured in seconds-minutes
+             - High tolerance for delay
+
+
+    - Hard real-time systems are outside the scope of this book, but a good explanation is found
+        in Hermann Kopetz’s book 'Real-Time Systems'.
+
+
+    - The boundary between soft and near real-time is blurry.  For instance, each of these could
+        be classified as either depending on the data consumer.
+
+        - A tweet is posted on Twitter, and moments later you see it in your client
+        - You are tracking flights using FlightAware
+        - You are using the NASDAQ Real Time Quotes application
+
+
+
+- Real-Time and Streaming Systems
+
+    - In many scenarios, we compute data in real-time, but clients don't consume it in real time.
+        We have a non-hard real-time service with clients that consume data when they need it.
+        This is known as a 'streaming' system.
+
+
+    - We will think of steaming systems as having the following components:
+
+        1. Collection Tier
+        2. Message Queueing Tier
+        3. Analysis Tier
+           (4. Long Term Storage Tier if applicable)
+        5. In-Memory Data Store
+        6. Data Access Tier
+
+
+    - Example - Twitter
+
+        Collection Tier = user posts a tweet to Twitter services
+
+        Message Queueing Tier = tweets move from collection to processing
+
+        Analysis Tier = much processing, including computing followers of a tweet
+
+        Long Term Storage Tier = old tweets are still available
+
+        In-Memory Data Storage Tier = new tweets are most likely kept in an in-memory store
+
+        Data Access = all Twitter clients need to be connected to access the service
