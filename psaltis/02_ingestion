@@ -105,3 +105,91 @@
 
     - Since streaming systems are composed of many layers and different technologies, checkpointing
         is not a good match for them.  It is useful in many other contexts, however.
+
+
+
+- Logging Protocols
+
+    - The idea behind logging is that if a message can be replayed, the system can reach a global
+        consistent state without the need for a global snapshot.
+
+
+    - Each tier in the system independently records all messages it receives and plays them back
+        after a crash.  This way we can add fault tolerance to the collection tier without worrying
+        about maintaining global state.
+
+
+    - There are 2 classic techniques for this:
+
+        1. Receiver-based message logging (RBML) = concerned with protecting data the node is receiving
+
+        2. Sender-based message logging (SBML) = concerned with protecting the data sent to the next tier
+
+      And there is also a hybrid message logging (HML) technique.
+
+
+
+- Receiver-Based Message Logging
+
+    - The RBML technique involves synchronously writing every received message to stable storage 
+        before any action is taken on it.
+
+        1. A message is sent from a data producer (any client)
+
+        2. The RBML logger gets the message and sends it to storage
+
+        3. The message is written to storage
+
+        4. The message then proceeds through for any further processing (enrichment, filtering, routing)
+
+        5. The message is sent to the message queueing tier
+
+
+    - Obviously, this carries a performance cost on the throughput of our collection.
+
+
+    - In a crash, 
+
+        1. Incoming messages to this collection node are stopped.  It will be taken out of rotation
+             by the load balancer.
+
+        2. The RBML logger reads messages that have not been processed from stable storage and sends
+             them through the rest of the node logic as if nothing has happened.
+
+        3. After all pending messages are processed, the node is considered restored and can be put
+             back into rotation.
+
+
+
+- Sender-Based Message Logging
+
+    - The SBML technique involves writing the message to stable storage before it is sent.  Whereas
+        RBML technique is to protect us from ourselves, SBML is to protect us from the next tier.
+
+
+    - In this case, the data we are recording has already been processed by our collection tier.
+
+
+    - During recovery, we need to know whether the next tier has already processed the message we
+        are replaying.  We can do that a few different ways:
+
+        1. Use a message queueing tier that returns an acknowledgment that it received the message.
+             With this acknowledgment, we can either mark the message as replayed in stable storage
+             or delete it because we no longer need it.
+
+        2. If we use a queueing technology that doesn't send acknowledgments, we may be forced to 
+             just delete it if the sending appeared successful.
+
+
+
+- Hybrid Message Logging
+
+    - We'll be protected against data loss by using both RBML and SBML, but we'll pay a steep 
+        performance penalty.  Hybrid message logging is designed to reduce this cost.  
+
+
+    - One thing we can do is consolidate the 2 stable storage instances into a single instance.
+
+
+    - The other thing we can do is write to storage asynchronously, but that adds to the 
+        implementation complexity.
