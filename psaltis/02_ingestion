@@ -1,0 +1,107 @@
+----------------------------------------------------------------------------
+|  CHAPTER 2 - DATA INGESTION                                              |
+----------------------------------------------------------------------------
+
+- Common Interaction Patterns
+
+    - Request/Response Pattern
+
+        - Client sends request to service, service sends a response
+
+        - Drawback is client has to sit and wait for synchronous response
+
+        - Solution #1: Client-side half async = client makes requests, continues and gets 
+            asynchronous responses later (used by web browsers)
+
+        - Solution #2: Service-side half async = service receives request from client, delegates
+            work to be done, then responds to client when work is finished (makes services
+            much more scalable)
+
+        - Solution #3: Full async = both client and service perform their work asynchronously
+
+
+    - Request/Acknowledge Pattern
+
+        - Sometimes, you don't need a response from a service, just an acknowledgment of receipt.
+
+        - Often, the acknowledgment includes data (like an id) that can be used to make subsequent 
+            requests, like check the status of the request.
+
+
+    - Publish/Subscribe Pattern
+
+        - Producers publish messages to a broker on a topic.  Next, the message is sent to all
+            consumers subscribed to the topic.
+
+        - With some technologies, published messages are pushed to subscribers.  In other cases, the
+            subscribers pull for them.
+
+
+    - One-Way Pattern
+
+        - This is the 'fire and forget' pattern, where the system making the request doesn't need a
+            response at all.  This is useful when the client either doesn't have the resources or the
+            need to process a response.
+
+        - For example, services emitting metrics to a monitoring service.
+
+
+    - Stream Pattern
+
+        - In this case, the collection tier is a client, pulling data in from a streaming source.
+            We can have a stream as input and a stream as output.
+
+        - Unlike the other patterns, we don't need to find clients to connect to send requests to 
+            our service.  We connect to and process the data from the stream source.
+
+        - For instance, we connect to a Meetup.com feed that sends a JSON event each time someone 
+            RSVPs to a meetup.  In this case, a single long-lived HTTP connection is established,
+            and data is subsequently streamed back to your browser until you end the HTTP
+            connection.
+
+
+
+- Scaling the Interaction Patterns
+
+    - The request/resonse pattern is very scalable, because requests are stateless and we can
+        easily horizontally scale a service.  In fact, cloud providers offer autoscalers that will
+        scale a service up or down based on demand.  This approach requires a load balacer.
+
+
+    - With many streaming protocols (for instance, the Meetup.com RSVP stream above), there is a
+        direct and persistent connection between the client and service.
+
+      This can lead to one client doing all the ingestion while the others sit idle.  There are 2
+        possible solutions for scaling up our streaming collection:
+
+        1. Scale up the number of concurrent collection nodes
+        2. Add a buffering layer, and have collection nodes pull from that
+
+
+
+- Fault Tolerance
+
+    - At some point, our collection nodes will fail.  Depending on the business, in many cases it is
+        not OK to lose data.  So, we want to recover as if a crash never occurred.
+
+
+    - The 2 primary approaches to implementing fault tolerance:
+
+        1. Checkpointing
+        2. Logging
+
+
+
+- Checkpointing
+
+    - Checkpoint-based protocols have the following characteristics:
+
+        1. Global Snapshot = a snapshot of the global state of the whole system has to be regularly
+                               saved to storage somewhere
+
+        2. Potential for data loss = only recoverable up to checkpoint time, any messages processed
+                                       afterward are lost
+
+
+    - Since streaming systems are composed of many layers and different technologies, checkpointing
+        is not a good match for them.  It is useful in many other contexts, however.
