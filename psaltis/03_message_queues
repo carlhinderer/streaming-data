@@ -1,0 +1,143 @@
+----------------------------------------------------------------------------
+|  CHAPTER 3 - TRANSPORTING DATA FROM THE COLLECTION TIER                  |
+----------------------------------------------------------------------------
+
+- Core Message Queue Topics
+
+    - In a streaming system, we use a message queue to decouple the tiers from one another.
+
+
+    - Message Queue Products
+
+        - Traditional: RabbitMQ, ActiveMQ, HornetQ
+        - Newer: Kafka, NSQ, ZeroMQ
+
+
+    - Producer, Broker, and Consumer
+
+        Producer  -- M -->  Broker  -- M -->  Consumer
+
+        In Kafka, a Broker can manage multiple message queues.
+
+
+    - It is often the case that the collection tier (producers) is generating messages faster than 
+        the consumers (analysis tier) can consume them.  This is known as backpressure, and is one
+        of the problems solved by message queues.
+
+
+    - Some message queue products provide durability, the ability to retain messages for a specified
+        amount of time.  This allows for fault tolerance and more flexibility for consumers.  They
+        may be stored durably in the file system, a JDBC database, a propriety store, etc.
+
+      Otherwise, messages are transient and disappear from the queue as they are consumed.
+
+
+
+- Message Delivery Semantics
+
+    - There are 3 common semantic guarantees you will find in message queueing products:
+
+        1. At most once = a message may get lost, but it will never be reread by a consumer
+
+        2. At least once = a message will never be lost, but it may be reread by a consumer
+
+        3. Exactly once = a message will never be lost, and is read only once
+
+
+    - To implement an exactly once system:
+
+        1. Do not try to resend messages.  To do this, we need to keep track of what messages the
+             producer sends to the broker.  If and when there is no response, we can read data from
+             the broker to verify we didn't receive an acknowledgment for the last message.
+
+        2. Store metadata for the last message we read.  If we're using Kafka, this is the message
+             offset.  We'd also store metadata that can be used to uniquely identify a payload
+             of a message.  This way we don't consume a message that has already been processed.
+
+
+
+- Security
+
+    - Security Concerns
+
+        - Producer authentication and authorization
+        - Can brokers authenticate each other?
+        - Consumer authentication and authorization
+        - Messages encrypted in transit
+        - Messages encrypted at rest
+
+
+
+- Fault Tolerance
+
+    - Fault Tolerance Concerns
+
+        - What happens if the network fails?
+        - What happens if the durable storage being used by our queue fails?
+        - What happens if one of the brokers fails?
+
+
+    - What happens if a broker crashes?
+
+        - If the broker uses durable storage, hopefully only the messages in memory are at risk.
+        - We could wait until a message is written to disk to send it.
+        - We could replicate messages to more than one broker.
+        - We could configure the broker to dump messages to disk quicker, but performance is affected.
+
+
+    - What happens if the network between the 2 brokers is interrupted?
+
+        - If data is replicated, it will be synced when the connection is restored.
+        - What happens to data if a producer was in the middle of sending a message when interrupted?
+
+
+    - What happens if we lose a drive?
+
+        - Are there replicas of the data that was lost?
+        - If data was being replicated when the disk crashed, is it lost?
+        - How can you recover a broker?
+
+
+
+- Example - Finance Fraud Detection
+
+    - A company provides real-time fraud detection services that help detect fraud as it is happening.
+        It collects credit card transactions from all over the web as they are occurring, runs some
+        algorithms against the data, then send back approved or declined messages while the purchase
+        is happening.
+
+
+    - Losing data is not an option in this business case.  We need to be able to measure our performance 
+        over time.
+
+
+    - In this case, exactly once semantics are likely to be our best option.  We don't want to miss
+        a transaction.  We may be able to use at least once, but it would make the consumers more
+        complicated.
+
+
+
+- Example - Internet of Things
+
+    - A business owns lots of Coke machines and wants to send push notifications with special offers
+        to consumers who are geographically close.
+
+
+    - We can probably tolerate some data loss and we don't need to store historical data.
+
+
+    - We can probably use at-least-once semantics, although at-most-once may also suffice.
+
+
+
+- Example - Product Recommendations
+
+    - A fashion e-commerce website wants to show users what other people have recently added to their
+        cart or purchased.
+
+
+    - We don't want to lose data, since our inability to upsell would affect profits.  We want to
+        be able to measure historical performance to improve our algorithms.
+
+
+    - Since there is no real cost to duplication, at-least semantics should suffice.
