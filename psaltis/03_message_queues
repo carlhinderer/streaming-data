@@ -140,4 +140,4 @@
         be able to measure historical performance to improve our algorithms.
 
 
-    - Since there is no real cost to duplication, at-least semantics should suffice.
+    - Since there is no real cost to duplication, at-least once semantics should suffice.

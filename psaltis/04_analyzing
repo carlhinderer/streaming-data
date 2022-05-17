@@ -1,0 +1,137 @@
+----------------------------------------------------------------------------
+|  CHAPTER 4 - ANALYZING STREAMING DATA                                    |
+----------------------------------------------------------------------------
+
+- In-flight Data Analysis
+
+    - In-flight data is all the tuples in the system, from the source to the output to a client.
+        It is always in motion and never at rest (never persisted to durable storage).
+
+
+    - In a traditional DBMS-based system (ie RDBMS, Hadoop, HBase, Cassandra, etc), data is at rest,
+        and we query it for answers.  
+
+      In streaming systems, this is turned on its head.  Data moves through the queries.  This is
+        called the 'continuous query model', meaning that the query is constantly being evaluated
+        as new data arrives.
+
+
+    - In a streaming system, a user (or application) registers a query that is executed every time
+        data arrives or at a predetermined time interval.  The result of the query is then pushed to
+        the client.
+
+
+
+- Examples of Problems Solved By Streaming Analysis Tier
+
+    - Tracking behavior - Provide personalized advertising based on a customer's location, the weather,
+        and their previous buying habits.
+
+
+    - Improving traffic safety and efficiency - Get real-time traffic data from sensors, analyze
+        traffic data to solve traffic problems.
+
+
+    - Real-time fraud analysis - US fraud losses on credit cards have declined 70% as a percentage of
+        credit card sales since real-time analytics were deployed.
+
+
+
+- Distributed Stream Processing Architecture
+
+    - At some point, the velocity and volume of data make it impossible to process on a single
+        computer, and we need a distributed architecture.
+
+
+    - All of the streaming platforms have 3 common parts:
+
+        1. A component that your streaming application is submitted to.  Your application is sent
+             to a node in the cluster that executes your application.
+
+        2. Separate nodes in the cluster execute your streaming algorithms.
+
+        3. Data sources the are input to the streaming algorithms.
+
+
+
+- Common Architectural Pieces
+
+    - Application driver - With some streaming systems, this defines your streaming and communicates
+        with the streaming manager.  With Spark Streaming, the driver submits your job to the
+        streaming manager, may collect results at the end, and controls the lifetime of your job.
+
+
+    - Streaming manager - Has responsibility of getting your streaming job to the stream processors.
+        In some cases, it will control or request the resources required by the stream processors.
+
+
+    - Stream processor - Place where the jobs run.
+
+
+    - Data sources - Input and potentially output of streaming jobs.
+
+
+
+- Apache Spark Streaming
+
+    - Apache Spark has become the de facto platform for general-purpose distributed computation.
+        It has support for the Java, Scala, Python, and R languages.  
+
+        Spark Streaming  |  MLib  |  GraphX  |  SparkSQL
+        ------------------------------------------------
+                        Apache Spark
+
+
+    - The Spark 'StreamingContext' client contains all the logic to keep track of incoming data,
+        set up the streaming jobs, schedule them on Spark workers, and execute the jobs.
+
+
+        Your Program
+        (contains Spark StreamingContext)   <-->  Spark Worker  <-->  Data Source
+
+
+    - A 'job' in Spark Streaming is the loic of your program that's bundled up and passed to Spark
+        workers.  This is similar to the concept of a job with Hadoop MapReduce workers.
+
+
+
+- Apache Storm
+
+    - Apache Storm is a tuple-at-a-time stream-processing framework designed for real-time processing
+        of data streams.
+
+        
+        Your Program  ->  Nimbus (master node)  <-->  Supervisor  <-->  Data sources
+
+
+
+- Apache Flink
+
+    - Apache Flink is a stream first framework, where everything is viewed as a stream.
+
+
+    - A Flink program contains 2 fundamental building blocks:
+
+        1. Stream = an intermediate result as the data flows from sink to sink
+
+        2. Transformation = operation that takes stream as input and produces one or more streams
+                              as output
+
+
+    - When an application is composed of these components and is executed in Flink, it is considered
+        a streaming 'dataflow'.
+
+        Your Program
+        (contains Flink client)  <-->  JobManager (master)  <-->  TaskManager (worker)
+
+
+
+- Apache Samza
+
+    - Apache Samza provides a stage-wise stream-processing framework using Apache Yarn and Apache
+        Kafka.
+
+
+    - YARN manages all the resources (CPU, memory, disk, network, etc.) for all applications running
+        on a cluster of computers.  Kafka is used as a high-speed data store that our streaming
+        tasks will read from and write to.
