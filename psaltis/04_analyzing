@@ -135,3 +135,94 @@
     - YARN manages all the resources (CPU, memory, disk, network, etc.) for all applications running
         on a cluster of computers.  Kafka is used as a high-speed data store that our streaming
         tasks will read from and write to.
+
+
+
+- Message Delivery Semantics
+
+    - Remember, there are 3 different types of delivery guarantees:
+
+        1. At most once
+        2. At least once
+        3. Exactly once
+
+
+    - We can consider 2 possible failure scenarios:
+
+        1. a message gets dropped between stream processors
+        2. the stream processor crashes
+
+
+    - With 'at most once', our logic is very simple.  If a message is dropped or a processor crashes,
+        we don't worry about it.
+
+
+    - With 'at least once', a processor must keep track of every message that was sent and whether
+        an acknowledgment was received.  If the stream manager determines the message wasn't 
+        processed, it will be re-sent.
+
+      Note that in this case, a message might be sent multiple times.  Therefore, your streaming job
+        must be idempotent.  We often need to design this into our streaming jobs to handle the
+        duplicate messages situation.
+
+
+    - For 'exactly once', in addition to keeping track of all the messages sent, we must also detect
+        and ignore duplicates.  Using this guarantee level makes writing streaming jobs easier, since
+        they no longer have to be idempotent.
+
+
+    - Which level of delivery guarantee should we pick to solve a given business problem.  Start
+        with the least complex guarantee and work backwards from there.  Can our system still
+        function correctly if some data is missing?
+
+
+
+- State Management
+
+    - The state management facilities provided by various systems naturally vary in complexity from
+
+         Low (In memory)
+         to
+         High (Replicated, queryable, persistent storage)
+
+
+    - The low complexity facilities will help you recover in case of a failure.  The high complexity
+        facilities might have more advance features, like the ability to join historical streams
+        together.
+
+
+
+- Fault Tolerance
+
+    - If there is a problem with an incoming stream of data, our stream processing framework must
+        respond gracefully and not fail.
+
+
+    - If a stream processor fails, the streaming manager must take steps to restart the processor
+        or move the processing to a different machine.
+
+
+    - If the streaming manager fails, the streaming system must be able to restart once a new
+        manager is started.
+
+
+    - We can protect against data loss by replicating the state of computation onto different
+        stream processors.  If we can tolerate k defaults, we are said to have a
+        'k-fault tolerant' system.
+
+      There are 2 common approaches a system may take toward replication and coordination:
+
+        1. State machine
+        2. Rollback recovery
+
+
+    - With the 'state machine' approach, the stream manager replicates the streaming job on 
+        independent nodes and coordinates the replicas by sending the input in the same order
+        to all.  This approach requires extra resources, but allows for quick failover.
+
+
+    - With the 'rollback recovery' approach, the stream processor periodically packages the
+        state of computation into a 'checkpoint', which it copies to a different stream processor
+        node or just to disk somewhere.  If a stream processor fails, the stream manager must
+        reconstruct the state from the most recent checkpoint and replay all transactions in the
+        log since.
