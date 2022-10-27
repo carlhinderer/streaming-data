@@ -1,0 +1,261 @@
+-----------------------------------------------------------------------
+| CHAPTER 1 - EVENT STREAMS                                           |
+-----------------------------------------------------------------------
+
+- Events
+
+    - A company is an organization that generates and responds to a continuous stream of events.
+
+
+    - An 'event' is anything we can observe occurring at a particular point in time.  For example:
+
+        - Machine 27-G breaks its drill bit at 12:03:48 Jul 11, 2018.
+
+        - Kawacuchi-saw checks in to Hoshi Ryokan Hotel at 20:05 Dec 14, AD 718
+
+        - Anon user 123 adds blue T-shirt to shopping basket at 16:04:16.675ms Feb 28, 2019.
+
+        - Trading starts on Facebook shares at 11:30:00 May 18, 2018.
+
+
+    - What is not an event?
+
+        - A description of the ongoing state of something (ie the API client is broken)
+
+        - A recurring occurrence (ie the NASDAQ opens at 9:30 every day)
+
+        - A collection of individual events (ie the Franco-Prussian War)
+
+        - A happening that spans a time frame (ie a sale runs from 8AM to Midnight)
+
+
+    - A 'continuous event stream' is an unterminated succession of individual events, ordered by the point
+        in time in which each event occurred.
+
+        - The start of the stream may predate our observing of the system
+        - The end of the stream is at some unknown point in the future
+
+
+
+- Exploring Familiar Event Streams
+
+    - Many software systems are influenced by the idea of generating and responding to a continuous event
+        stream:
+
+        - Transactional systems (respond to events like orders or deliveries)
+        - DWs (put event histories in fact tables)
+        - Systems monitoring (continuously check system- and application-level events)
+        - Web analytics packages (explore visitor's on-site event streams)
+
+
+    - Application-level logging is a very familiar event stream:
+
+        // Log4j Logging
+        INFO 2018-10-15 10:50:14,125 [Log4jExample_main] "org.alexanderdean.Log4jExample": Did something
+        INFO 2018-10-15 10:55:34,345 [Log4jExample_main] "org.alexanderdean.Log4jExample": Did something else
+
+        - Best practice says you write logs to disk files, then use a log collection technology, such as
+            Flume, Fluentd, Logstash, or Filebeat, to collect the logs from the individual workers and ingest
+            them into a tool for systems monitoring or log-file analysis.
+
+
+    - Web Analytics
+
+        - The most popular software in this category is Google Analytics, a SaaS web analytics platform.
+            Here is some JS code to make it work on your web page:
+
+            <script>
+                // Initialization code for the Universal Analytics tracking tag
+                (function(i,s,o,g,r,a,m){i[’GoogleAnalyticsObject’]=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new
+                Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode
+                .insertBefore(a,m)
+                })(window,document,’script’,’//www.google-analytics.com/analytics.js’,’ga’);
+
+                // Create a web tracker for the given account for the test.com website
+                ga(’create’, ’UA-34290195-2’, ’test.com’);
+
+                // Track the website visitor viewing this web page
+                ga(’send’, ’pageview’);
+
+                // Track the website visitor watching a video on this web page
+                ga(’send’, ’event’, ’video’, ’play’, ’doge-video-01’);
+            </script>
+
+
+        - A business analyst can then log into the Google Analytics web interface and start to make sense
+            of the website's event stream across all of it's visitors.
+
+
+    - Publish/Subscribe Messaging
+
+        - Message senders publish messages that can be associated with one or more topics.  Message receivers
+            subscribe to specific topics, and then receive all messages associated with that topic.
+
+
+        - Here is a set of events consumed by a subscriber to a topic:
+
+            checkout
+            ad_click
+            save_game
+
+
+
+- Unifying Continuous Event Streams
+
+    - The event streams we have looked at so far are highly fragmented.  Their schemas are unstandardized
+        and their use cases are trapped in separate silos.  This book argues that every digital business
+        should be restructured around a process that does the following:
+
+        - Collects events from disparate source systems
+        - Stores them in a unified log
+        - Enables data processing applications to operate on these event streams
+
+
+    - We'll look at this transition over the course of 3 eras:
+
+        1. The classic era (operational systems and batch-loaded DWs)
+        2. The hybrid era (today's hodgepodge of different systems and approaches)
+        3. The unified era (an emerging architecture enabled by processing continuous event streams in a
+                            unified log)
+
+
+
+- The Classic Era
+
+    - Businesses operated a disparate set of on-premises transactional systems, feeding into a DW.
+
+
+    - Each transactional system had the following:
+
+        - An interal 'local loop' for near-real-time data processing
+        - Its own data silo
+        - Where necessary, point-to-point connections to peer systems (ie APIs)
+
+
+    - A DW would be added to give the management team a much-needed view across these transactional 
+        systems.  It would typically be fed from the transactional systems overnight by a set of batch
+        ETL processes.
+
+      Internally, it was often constructured following the star schema style of fact and dimension tables,
+        as popularized by Ralph Kimball.
+
+
+    - Many businesses still run on a close descendant of this approach, albeit with more SaaS platforms
+        mixed in.  It does have some pain points, though:
+
+        - High latency for reporting
+        - Point-to-point spaghetti
+        - Schema woes
+
+
+
+- The Hybrid Era
+
+    - The hybrid era is characterized by companies operating a hodgepodge of transactional and analytics
+        systems - on-premises packages, some from SaaS vendors, and some homegrown systems.
+
+
+    - They have strong local loops and data silos, but there are attempts at 'log everything' approaches
+        with Hadoop and/or systems monitoring.
+
+
+    - There tends to be a mix of near-real-time processing for narrow analytics use cases such as product 
+        recommendations, plus separate batch-processing efforts into Hadoop as well as a classic data 
+        warehouse. 
+
+
+    - Hybrid architectures also feature attempts to bulk-export data from external SaaS vendors for
+        warehousing, and efforts to feed these external systems with proprietary data through these systems’ 
+        own APIs.
+
+
+    - This hybrid approach delivers capabilities lacking from the class approach, but it brings it's own
+        problems:
+
+        - No single version of truth
+        - Decisioning has become fragmented
+        - Point-to-point connections have proliferated
+        - Analytics can have low latency or wide data coverage, but not both
+
+
+
+- The Unified Era
+
+    - In the present day, we see the emerging unified era of data processing.  The key innovation is to put
+        a single unified log at the heart of all of our data collection and processing.
+
+
+    - A 'unified log' is an append-only log to which we write all events generated by our applications.  It
+        has these characteristics:
+
+        - Can be read from at low latency
+        - Is readable by multiple applications simultaneously, each at their own pace
+        - Holds a rolling window of events (probably a week or month's worth)
+        - But we can archive historical events in HDFS or S3
+
+
+    - The new architecture for an organization is guided by 2 simple rules:
+
+        1. All software can and should write their individual continuous event streams to the unified log.
+             Even 3rd-party SaaS vendors can emit events via webhooks and streaming APIs.
+
+        2. Unless very low-latency or transactional guarantees are required, software systems should
+             communicate with each other in an uncoupled way through the unified log, not via point-to-point
+             connections.
+
+
+    - This has a few advantages over the previous architectures:
+
+        - Single version of truth
+        - The single version of truth is upstream from the DW (operational systems have same version)
+        - Point-to-point connections have largely been unraveled
+        - Local loops have been unbundled
+
+
+
+- New Use Cases for the Unified Log
+
+    - Customer Feedback Loops
+
+        - We can gain the ability to respond to an individual customer's behavior while the customer is still
+            engaged with our service.
+
+        - In retail, whenever a customer looks like they are about to abandon their shopping cart, we can
+            pop up a coupon to coax them into checking out.
+
+        - In TV, we can adjust the program guide in real-time based on the viewer's current behavior and
+            historical watching patterns.
+
+        - In automotive, we can detect abnormal driving patterns and notify the owner that the car may have
+            been stolen.
+
+        - In gaming, we can adjust the difficulty level of the game if it is too easy or too difficult for
+            the players.
+
+
+    - Holistic systems monitoring
+
+        - Robust monitoring of systems and services is painful, because the signals available are so
+            fragmented.  Server monitoring is fed into a third party service, often pre-aggregated for
+            network bandwidth reasons.  Application logs are hopefully collected before the server is
+            killed or shut down.  Customer events are sent to a third-party service and are not available
+            for granular inspection.
+
+        - With a unified log, any systems issue can be investigated by exploring any of the event stream
+            data held in the unified log.
+
+
+    - Hot-Swapping Data Application Versions
+
+        - Each application can read events at its own pace, and can independently keep track of which events
+            it has already processed, and which are next to process.
+
+        - This means we can have multiple versions of the same application processing events from the
+            unified log.  This allows us to upgrade our data applications without taking them offline.
+
+        - The ability for each application to maintain its own cursor position is very powerful.  This
+            means we can test new versions of our application against the live event stream, compare
+            the results with the existing version of the application, and let different users consume
+            different versions of the application.
