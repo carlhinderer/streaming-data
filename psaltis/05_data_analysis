@@ -1,0 +1,110 @@
+----------------------------------------------------------------------------
+|  CHAPTER 5 - ALGORITHMS FOR DATA ANALYSIS                                |
+----------------------------------------------------------------------------
+
+- Streaming Analytics
+
+    - We often refer to the algorithmic side of stream processing as 'streaming analytics'.  In
+        general, there are 2 types of queries we may want to execute in a streaming system:
+
+        1. Ad Hoc = asked one time about a stream, similar to a RDBMS query
+
+        2. Continuous = asked about the stream at all times
+
+
+    - There is no standard query language for stream processing.  These are the languages supported
+        by common frameworks:
+
+        Apache Storm              =   SQL
+        Apache Samza              =   Still waiting for query language support
+        Apache Flink              =   SQL-like expressions
+        Apache Spark Streaming    =   SparkSQL/Hive
+
+
+
+- Accepting Constraints and Relaxing
+
+    - One of the unique aspects of a streaming system is that we can't store the entire stream because
+        it's unbounded and never ending.  However, we want to continuously provide results to queries
+        online.  As data reaches the analysis tier, it might need to be recomputed or updated.
+
+
+    - It is important to keep the following constraints in mind when designing stream processing
+        algorithms.
+
+        1. One pass = You must assume data is being archived and you only have one chance to process it.
+
+        2. Concept drift = Changes in data may affect your predictive models.
+
+        3. Resource constraints = An algorithm may need to drop tuples that can't be processed in time.
+
+        4. Domain constraints = Constraints particular to your business domain.
+
+
+
+- Thinking About Time
+
+    - 'Stream time' is the time at which an event enters the streaming system.  'Event time' is the
+        time at which the event occurs.  The difference between them is known as the 'time skew'.
+
+
+    - Due to its size and never-ending nature, a stream processing engine cannot keep an entire stream
+        of data in memory.  To perform computations on it, we use windows of data.  A 'window' represents
+        a certain amount of data we can perform computations on.
+
+
+    - There are 2 attributes that all windowing techniques have:
+
+        1. Trigger policy = rules that a stream processing system uses to notify our code it's time to
+                              process all the data that is in the window
+
+        2. Eviction policy = defines rules used to decide if a data element should be evicted from the
+                               window
+
+      Both policies are driven either by time or the quantity of items in the window.
+
+
+
+- Sliding Windows
+
+    - The 'sliding window' technique uses eviction and trigger policies that are both based on time.
+
+        A. The window length represents the eviction policy.  This is the duration of time that data
+             is retained and available for processing.  If the window length is 2 seconds, data older 
+             than 2 seconds will be evicted.
+
+        B. The sliding interval defines the trigger policy.  If the sliding interval is one second,
+             our code would get triggered every second.
+
+
+    - For instance, if we had some analytics we were computing on data from the last 30 minutes, and
+        we wanted to update the analytics once every 5 seconds, we would have 
+
+        Window Length = 30 minutes
+        Sliding Interval = 5 seconds
+
+
+
+- Tumbling Windows
+
+    - The 'tumbling window' technique offers a slight twist.
+
+        A. The eviction policy is based on the window being full.
+
+
+
+- Summarization Techniques
+
+
+- Random Sampling
+
+
+- Counting Distinct Elements
+
+
+- Frequency
+
+
+- Membership
+
+

@@ -65,7 +65,7 @@
 
     - The request/resonse pattern is very scalable, because requests are stateless and we can
         easily horizontally scale a service.  In fact, cloud providers offer autoscalers that will
-        scale a service up or down based on demand.  This approach requires a load balacer.
+        scale a service up or down based on demand.  This approach requires a load balancer.
 
 
     - With many streaming protocols (for instance, the Meetup.com RSVP stream above), there is a
